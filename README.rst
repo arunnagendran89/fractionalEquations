@@ -73,6 +73,5 @@ Change Logs
 -----------
 - Commit 1: Create a class for operands. add basic apis
 - Commit 2: Update __reduceFractions implementation and add comments.
-- Commit 3: Add Command Line Interface, descriptive
-custom exceptions and readme.
+- Commit 3: Add Command Line Interface, descriptive custom exceptions and readme.
 

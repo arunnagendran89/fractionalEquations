@@ -91,7 +91,15 @@ class FractionalOperand:
             y = temp
         return y
 
-    def getIrregularFraction(self):
+    def makeIrregularFraction(self):
+        """
+        Convert a mixed fraction to irregular fraction. Useful when
+        having to perform arithmetic operations.
+        eg:
+        a_b/c => (c*a + b)/c
+
+        :return: Nothing. Update self with irregular function.
+        """
         self.numerator = self.whole * self.denominator + self.numerator
         self.whole = 0
 
@@ -126,6 +134,11 @@ class FractionalOperand:
         self.__reduceFractions()
 
     def abs_value(self):
+        """
+        Compute absolute value of the fraction operand.
+        Useful for comparative operations.
+        :return: absolute decimal value of the fraction
+        """
         value = self.whole + self.numerator / self.denominator
         return value
 
@@ -137,13 +150,16 @@ class FractionalOperand:
         :param operand2: operand to be added to self. should be of type FractionalOperand
         :return: Nothing. Sum is saved in self operand
         """
-        self.getIrregularFraction()
-        operand2.getIrregularFraction()
+        self.makeIrregularFraction()
+        operand2.makeIrregularFraction()
         isResultNegative = self.isNegative
+        # if both of the operands are positive or or both are negative then the absolute values should be added
+        # else their absolute values should be subtracted
         if self.isNegative and operand2.isNegative or not self.isNegative and not operand2.isNegative:
             self.numerator = self.numerator*operand2.denominator + self.denominator * operand2.numerator
         else:
             self.numerator = self.numerator * operand2.denominator - self.denominator * operand2.numerator
+        # assign the negative sign of the result based on the signs and values of the operands
         if self.isNegative and not operand2.isNegative:
             if self.abs_value() <= operand2.abs_value():
                 isResultNegative = False
@@ -166,13 +182,16 @@ class FractionalOperand:
         :param operand2:
         :return: Nothing. Difference is stored in self operand
         """
-        self.getIrregularFraction()
-        operand2.getIrregularFraction()
+        self.makeIrregularFraction()
+        operand2.makeIrregularFraction()
         isResultNegative = self.isNegative
+        # if both of the operands are positive or or both are negative then the absolute values should be subtracted
+        # else their absolute values should be added
         if self.isNegative and operand2.isNegative or not self.isNegative and not operand2.isNegative:
             self.numerator = self.numerator * operand2.denominator - self.denominator * operand2.numerator
         else:
             self.numerator = self.numerator * operand2.denominator + self.denominator * operand2.numerator
+        # assign the negative sign of the result based on the signs and values of the operands
         if self.isNegative and operand2.isNegative:
             if self.abs_value() <= operand2.abs_value():
                 isResultNegative = False
@@ -195,8 +214,8 @@ class FractionalOperand:
         :param operand2:
         :return: Nothing. Product of the two operands is stored in self operand
         """
-        self.getIrregularFraction()
-        operand2.getIrregularFraction()
+        self.makeIrregularFraction()
+        operand2.makeIrregularFraction()
         isResultNegative = self.isNegative != operand2.isNegative
         self.numerator *= operand2.numerator
         self.denominator *= operand2.denominator
@@ -211,8 +230,8 @@ class FractionalOperand:
         :param operand2:
         :return: Nothing. Quotient and partition of the division operation is stored in self operand
         """
-        self.getIrregularFraction()
-        operand2.getIrregularFraction()
+        self.makeIrregularFraction()
+        operand2.makeIrregularFraction()
         isResultNegative = self.isNegative != operand2.isNegative
         if operand2.numerator == 0:
             raise ZeroDivisionError
@@ -220,7 +239,4 @@ class FractionalOperand:
         self.denominator *= operand2.numerator
         self.__minified()
         self.isNegative = isResultNegative
-
-
-
 
