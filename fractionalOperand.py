@@ -1,3 +1,6 @@
+from exceptions import *
+
+
 class FractionalOperand:
     """
     Class to objectify fractional operand strings.
@@ -18,10 +21,13 @@ class FractionalOperand:
         self.whole = 0
         self.numerator = 0
         self.denominator = 1
+        self.isNegative = False
+        if not isinstance(operandString, str):
+            raise InvalidInputType
         if operandString:
             self.parse(operandString)
             if self.denominator == 0:
-                raise Exception
+                raise ZeroDenominatorException
         else:
             self.__minified()
 
@@ -36,10 +42,12 @@ class FractionalOperand:
         if self.whole != 0:
             res += str(self.whole)
             isUnderscore = True
-        if self.numerator > 0:
+        if self.numerator != 0:
             if isUnderscore:
                 res += '_'
             res += str(self.numerator) + "/" + str(self.denominator)
+        if res and self.isNegative:
+            res = '-' + res
         return res or '0'
 
     def parse(self, operandString):
@@ -61,7 +69,7 @@ class FractionalOperand:
             self.numerator = 0
             self.denominator = 1
         if str(self.denominator) == '0':
-            raise Exception
+            raise ZeroDenominatorException
         self.numerator = int(self.numerator)
         self.denominator = int(self.denominator)
         self.__minified()
@@ -83,6 +91,10 @@ class FractionalOperand:
             y = temp
         return y
 
+    def getIrregularFraction(self):
+        self.numerator = self.whole * self.denominator + self.numerator
+        self.whole = 0
+
     def __reduceFractions(self):
         """
         Convert fraction to irreducible form.
@@ -101,16 +113,21 @@ class FractionalOperand:
         2. Convert fractions to irreducible form.
         :return: minified fraction operand
         """
-        isNegative = False
         if self.whole < 0:
-            isNegative = True
+            self.isNegative = True
             self.whole *= -1
+        elif self.numerator < 0:
+            self.isNegative = True
+            self.numerator *= -1
+
         self.numerator = self.whole*self.denominator + self.numerator
         self.whole = self.numerator//self.denominator
-        self.numerator = self.numerator - self.whole*self.denominator
+        self.numerator = self.numerator % self.denominator
         self.__reduceFractions()
-        if isNegative:
-            self.whole *= -1
+
+    def abs_value(self):
+        value = self.whole + self.numerator / self.denominator
+        return value
 
     def add(self, operand2):
         """
@@ -120,10 +137,26 @@ class FractionalOperand:
         :param operand2: operand to be added to self. should be of type FractionalOperand
         :return: Nothing. Sum is saved in self operand
         """
-        self.whole = self.whole + operand2.whole
-        self.numerator = self.numerator*operand2.denominator + self.denominator * operand2.numerator
+        self.getIrregularFraction()
+        operand2.getIrregularFraction()
+        isResultNegative = self.isNegative
+        if self.isNegative and operand2.isNegative or not self.isNegative and not operand2.isNegative:
+            self.numerator = self.numerator*operand2.denominator + self.denominator * operand2.numerator
+        else:
+            self.numerator = self.numerator * operand2.denominator - self.denominator * operand2.numerator
+        if self.isNegative and not operand2.isNegative:
+            if self.abs_value() <= operand2.abs_value():
+                isResultNegative = False
+            else:
+                isResultNegative = True
+        if not self.isNegative and operand2.isNegative:
+            if self.abs_value() < operand2.abs_value():
+                isResultNegative = True
+            else:
+                isResultNegative = False
         self.denominator = self.denominator*operand2.denominator
         self.__minified()
+        self.isNegative = isResultNegative
 
     def subtract(self, operand2):
         """
@@ -133,10 +166,26 @@ class FractionalOperand:
         :param operand2:
         :return: Nothing. Difference is stored in self operand
         """
-        self.whole = self.whole - operand2.whole
-        self.numerator = self.numerator * operand2.denominator - self.denominator * operand2.numerator
+        self.getIrregularFraction()
+        operand2.getIrregularFraction()
+        isResultNegative = self.isNegative
+        if self.isNegative and operand2.isNegative or not self.isNegative and not operand2.isNegative:
+            self.numerator = self.numerator * operand2.denominator - self.denominator * operand2.numerator
+        else:
+            self.numerator = self.numerator * operand2.denominator + self.denominator * operand2.numerator
+        if self.isNegative and operand2.isNegative:
+            if self.abs_value() <= operand2.abs_value():
+                isResultNegative = False
+            else:
+                isResultNegative = True
+        if not self.isNegative and not operand2.isNegative:
+            if self.abs_value() < operand2.abs_value():
+                isResultNegative = True
+            else:
+                isResultNegative = False
         self.denominator = self.denominator * operand2.denominator
         self.__minified()
+        self.isNegative = isResultNegative
 
     def multiply(self, operand2):
         """
@@ -146,37 +195,32 @@ class FractionalOperand:
         :param operand2:
         :return: Nothing. Product of the two operands is stored in self operand
         """
-        self.numerator = self.whole * self.denominator + self.numerator
-        self.whole = 0
-        operand2.numerator = operand2.whole * operand2.denominator + operand2.numerator
-        operand2.whole = 0
+        self.getIrregularFraction()
+        operand2.getIrregularFraction()
+        isResultNegative = self.isNegative != operand2.isNegative
         self.numerator *= operand2.numerator
         self.denominator *= operand2.denominator
         self.__minified()
+        self.isNegative = isResultNegative
 
     def divide(self, operand2):
-        '''
+        """
         Divide this fractional operand by another fractional operand.
         a_b/c divide d_e/f
         = (c*a + b) *f / (c *(d*f + e))
         :param operand2:
         :return: Nothing. Quotient and partition of the division operation is stored in self operand
-        '''
-        self.numerator = self.whole * self.denominator + self.numerator
-        self.whole = 0
-        operand2.numerator = operand2.whole * operand2.denominator + operand2.numerator
-        operand2.whole = 0
+        """
+        self.getIrregularFraction()
+        operand2.getIrregularFraction()
+        isResultNegative = self.isNegative != operand2.isNegative
         if operand2.numerator == 0:
-            raise Exception
+            raise ZeroDivisionError
         self.numerator *= operand2.denominator
         self.denominator *= operand2.numerator
         self.__minified()
+        self.isNegative = isResultNegative
 
 
-if __name__ == '__main__':
-    operand1 = FractionalOperand("-11_101/4")
-    operand2 = FractionalOperand("4/4")
-    print(operand1)
-    print(operand2)
-    operand1.divide(operand2)
-    print(operand1)
+
+

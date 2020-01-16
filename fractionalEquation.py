@@ -1,4 +1,5 @@
 from fractionalOperand import FractionalOperand
+from exceptions import *
 
 class FractionEquation:
     """
@@ -21,8 +22,8 @@ class FractionEquation:
         :param equation: input equation of fractions with arithmetic operations.
                          should be a string
         """
-        if not isinstance(equation, str):
-            raise Exception
+        if not isinstance(equation, str) or not equation:
+            raise InvalidInputType
         self.equation = equation
 
     def solve(self):
@@ -32,7 +33,6 @@ class FractionEquation:
         :return: string representation of resultant fraction
         """
         operand1Str, operatorStr, operand2Str = self.equation.split()
-        print(operand1Str, operatorStr, operand2Str)
         operand1 = FractionalOperand(operand1Str)
         operand2 = FractionalOperand(operand2Str)
         if operatorStr == '+':
@@ -44,12 +44,6 @@ class FractionEquation:
         elif operatorStr == '/':
             operand1.divide(operand2)
         else:
-            raise Exception
-        return str(operand1)
+            raise InvalidOperator
+        return operand1
 
-
-if __name__ == '__main__':
-    print(FractionEquation('5/2                * 3_3/4').solve())
-    print(FractionEquation('5/2 + 3_3/4').solve())
-    print(FractionEquation('-5/2 -                     -3_3/4').solve())
-    print(FractionEquation('5/2 / 30_3/40000000000000').solve())
